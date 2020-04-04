@@ -22,13 +22,12 @@ def main():
 
     tfms = transforms.Compose([
         ResizeImgAndDepth(sz),
-        ImgAndDepthToTensor()#,      
-        #NormalizeImg(mean, std)
+        ImgAndDepthToTensor(),      
+        NormalizeImg(mean, std)
     ])
 
     ds = NYUDataset('/home/pebert/lcnn/', tfms)
     dl = torch.utils.data.DataLoader(ds, bs, shuffle=True)
-
     for i in range(len(ds)):
         pth = 'utils/images/img' + str(i)+ '.jpg'
         save_image(ds[i][0], pth)

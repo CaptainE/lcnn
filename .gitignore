@@ -1,5 +1,7 @@
 /data
 /config
+/utils/images/*
+/utils/office/*
 /dataset
 /env
 /misc
@@ -14,5 +16,5 @@
 /*.jpg
 /*.pdf
 /*.svg
-/.tar
-/.mat
+/*.mat
+/*.tar
