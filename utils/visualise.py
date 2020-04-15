@@ -22,17 +22,20 @@ def main():
 
     tfms = transforms.Compose([
         ResizeImgAndDepth(sz),
-        ImgAndDepthToTensor(),      
-        NormalizeImg(mean, std)
+        ImgAndDepthToTensor()#,      
+        #NormalizeImg(mean, std)
     ])
 
     ds = NYUDataset('/home/pebert/lcnn/', tfms)
     dl = torch.utils.data.DataLoader(ds, bs, shuffle=True)
     for i in range(len(ds)):
-        pth = 'utils/images/img' + str(i)+ '.jpg'
-        save_image(ds[i][0], pth)
-        if i >20:
+        pth = 'utils/images/img_depth' + str(i)+ '.jpg'
+        if i>200:
+            save_image(ds[i][1], pth)
+        if i >220:
             break
+
+# to save depth change name: _depth and do ds[i][1]/255
 
 
 

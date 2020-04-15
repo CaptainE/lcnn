@@ -62,8 +62,8 @@ def get_outdir(identifier):
 
 
 def main():
-    args = docopt(__doc__)
-    config_file = args["<yaml-config>"] or "config/wireframe.yaml"
+    #args = docopt(__doc__)
+    config_file = "config/wireframe.yaml" #args["<yaml-config>"] or 
     C.update(C.from_yaml(filename=config_file))
     M.update(C.model)
     pprint.pprint(C, indent=4)
@@ -75,7 +75,7 @@ def main():
     torch.manual_seed(0)
 
     device_name = "cpu"
-    os.environ["CUDA_VISIBLE_DEVICES"] = args["--devices"]
+    os.environ["CUDA_VISIBLE_DEVICES"] = '0' #args["--devices"]
     if torch.cuda.is_available():
         device_name = "cuda"
         torch.backends.cudnn.deterministic = True
@@ -155,7 +155,7 @@ def main():
 
     if resume_from:
         optim.load_state_dict(checkpoint["optim_state_dict"])
-    outdir = resume_from or get_outdir(args["--identifier"])
+    outdir = resume_from or get_outdir('baseline') #args["--identifier"]
     print("outdir:", outdir)
 
     try:

@@ -35,6 +35,17 @@ class WireframeDataset(Dataset):
         image = (image - M.image.mean) / M.image.stddev
         image = np.rollaxis(image, 2).copy()
 
+
+        # /home/pebert/bts/pytorch/result_wireframe/raw/
+        dname = '/home/pebert/bts/pytorch/result_wireframe/raw/'+self.filelist[idx][:-10].split('/')[-1].replace("_a0", "").replace("_a1", "") + "_depth.png"
+        pred_depth = io.imread(dname).astype(float)/1000
+        pred_depth[pred_depth < 1e-3] = 1e-3
+        pred_depth[pred_depth > 10] = 10
+        pred_depth[np.isinf(pred_depth)] = 10
+        pred_depth[np.isnan(pred_depth)] = 1e-3
+        pred_depth = pred_depth/10*255
+        image = np.concatenate((image,pred_depth.reshape(1,512,512)),axis=0)
+
         # npz["jmap"]: [J, H, W]    Junction heat map
         # npz["joff"]: [J, 2, H, W] Junction offset within each pixel
         # npz["lmap"]: [H, W]       Line heat map with anti-aliasing

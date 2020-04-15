@@ -37,7 +37,7 @@ class Trainer(object):
         if not osp.exists(self.out):
             os.makedirs(self.out)
 
-        self.run_tensorboard()
+        #self.run_tensorboard()
         time.sleep(1)
 
         self.epoch = 0
