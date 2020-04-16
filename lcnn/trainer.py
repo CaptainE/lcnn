@@ -37,7 +37,7 @@ class Trainer(object):
         if not osp.exists(self.out):
             os.makedirs(self.out)
 
-        #self.run_tensorboard()
+        self.run_tensorboard()
         time.sleep(1)
 
         self.epoch = 0
@@ -57,14 +57,14 @@ class Trainer(object):
             os.makedirs(board_out)
         self.writer = SummaryWriter(board_out)
         os.environ["CUDA_VISIBLE_DEVICES"] = ""
-        p = subprocess.Popen(
-            ["tensorboard", f"--logdir={board_out}", f"--port={C.io.tensorboard_port}"]
-        )
+        #p = subprocess.Popen(
+        #    ["tensorboard", f"--logdir={board_out}", f"--port={C.io.tensorboard_port}"]
+        #)
 
-        def killme():
-            os.kill(p.pid, signal.SIGTERM)
+        #def killme():
+        #    os.kill(p.pid, signal.SIGTERM)
 
-        atexit.register(killme)
+        #atexit.register(killme)
 
     def _loss(self, result):
         losses = result["losses"]
