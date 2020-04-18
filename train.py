@@ -60,14 +60,24 @@ def get_outdir(identifier):
     os.system(f"git diff HEAD > {outdir}/gitdiff.patch")
     return outdir
 
+def load_my_state_dict(old_state, state_dict):
+
+    own_state = old_state.state_dict()
+    for name, param in state_dict.items():
+        if name == 'backbone.backbone.conv1.weight':#not in own_state:
+            own_state[name].copy_(torch.cat((param,torch.mean(param,dim=1,keepdim=True)),dim=1))
+        else:
+            own_state[name].copy_(param)
+    print(old_state.state_dict())
 
 def main():
-    #args = docopt(__doc__)
+    args = docopt(__doc__)
     config_file = "config/wireframe.yaml" #args["<yaml-config>"] or 
     C.update(C.from_yaml(filename=config_file))
     M.update(C.model)
     pprint.pprint(C, indent=4)
     resume_from = C.io.resume_from
+    resume_from = '/home/pebert/190418-201834-f8934c6-lr4d10-312k.pth.tar'
 
     # WARNING: L-CNN is still not deterministic
     random.seed(0)
@@ -75,7 +85,7 @@ def main():
     torch.manual_seed(0)
 
     device_name = "cpu"
-    os.environ["CUDA_VISIBLE_DEVICES"] = '0' #args["--devices"]
+    os.environ["CUDA_VISIBLE_DEVICES"] = '2' #args["--devices"] #'0'
     if torch.cuda.is_available():
         device_name = "cuda"
         torch.backends.cudnn.deterministic = True
@@ -114,7 +124,7 @@ def main():
     # print("epoch_size (valid):", len(val_loader))
 
     if resume_from:
-        checkpoint = torch.load(osp.join(resume_from, "checkpoint_latest.pth"))
+        checkpoint = torch.load(osp.join(resume_from))#, "checkpoint_latest.pth"))
 
     # 2. model
     if M.backbone == "stacked_hourglass":
@@ -131,8 +141,11 @@ def main():
     model = MultitaskLearner(model)
     model = LineVectorizer(model)
 
+    
+    print(model.state_dict())
     if resume_from:
-        model.load_state_dict(checkpoint["model_state_dict"])
+        load_my_state_dict(model,checkpoint["model_state_dict"])
+        #model.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(device)
 
     # 3. optimizer
@@ -155,7 +168,7 @@ def main():
 
     if resume_from:
         optim.load_state_dict(checkpoint["optim_state_dict"])
-    outdir = resume_from or get_outdir('baseline') #args["--identifier"]
+    outdir = get_outdir(args["--identifier"]) # 'baseline' resume_from or get_outdir('test') args["--identifier"]
     print("outdir:", outdir)
 
     try:
