@@ -60,15 +60,32 @@ def get_outdir(identifier):
     os.system(f"git diff HEAD > {outdir}/gitdiff.patch")
     return outdir
 
+def freeze_bn(net):
+    count = 0
+    for module in net.modules():
+        if isinstance(module, torch.nn.modules.BatchNorm1d):
+            module.eval()
+            module.weight.requires_grad = False
+            module.bias.requires_grad = False
+        if isinstance(module, torch.nn.modules.BatchNorm2d):
+            module.eval()
+            module.weight.requires_grad = False
+            module.bias.requires_grad = False
+        if isinstance(module, torch.nn.modules.BatchNorm3d):
+            module.eval() 
+            module.weight.requires_grad = False
+            module.bias.requires_grad = False
+
+
 def load_my_state_dict(old_state, state_dict):
 
     own_state = old_state.state_dict()
     for name, param in state_dict.items():
+        
         if name == 'backbone.backbone.conv1.weight':#not in own_state:
             own_state[name].copy_(torch.cat((param,torch.mean(param,dim=1,keepdim=True)),dim=1))
         else:
             own_state[name].copy_(param)
-    print(old_state.state_dict())
 
 def main():
     args = docopt(__doc__)
@@ -85,7 +102,7 @@ def main():
     torch.manual_seed(0)
 
     device_name = "cpu"
-    os.environ["CUDA_VISIBLE_DEVICES"] = '2' #args["--devices"] #'0'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '5' #args["--devices"] #'0'
     if torch.cuda.is_available():
         device_name = "cuda"
         torch.backends.cudnn.deterministic = True
@@ -142,15 +159,16 @@ def main():
     model = LineVectorizer(model)
 
     
-    print(model.state_dict())
     if resume_from:
         load_my_state_dict(model,checkpoint["model_state_dict"])
         #model.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(device)
 
+    freeze_bn(model)
+
     # 3. optimizer
     if C.optim.name == "Adam":
-        optim = torch.optim.Adam(
+        optim = torch.optim.AdamW(
             model.parameters(),
             lr=C.optim.lr,
             weight_decay=C.optim.weight_decay,
@@ -166,8 +184,8 @@ def main():
     else:
         raise NotImplementedError
 
-    if resume_from:
-        optim.load_state_dict(checkpoint["optim_state_dict"])
+    #if resume_from:
+    #    optim.load_state_dict(checkpoint["optim_state_dict"])
     outdir = get_outdir(args["--identifier"]) # 'baseline' resume_from or get_outdir('test') args["--identifier"]
     print("outdir:", outdir)
 
