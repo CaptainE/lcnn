@@ -94,7 +94,8 @@ def main():
     M.update(C.model)
     pprint.pprint(C, indent=4)
     resume_from = C.io.resume_from
-    resume_from = '/home/pebert/190418-201834-f8934c6-lr4d10-312k.pth.tar'
+    # Use this when you want to fine tune
+    #resume_from = '/home/pebert/190418-201834-f8934c6-lr4d10-312k.pth.tar'
 
     # WARNING: L-CNN is still not deterministic
     random.seed(0)
@@ -102,7 +103,7 @@ def main():
     torch.manual_seed(0)
 
     device_name = "cpu"
-    os.environ["CUDA_VISIBLE_DEVICES"] = '5' #args["--devices"] #'0'
+    os.environ["CUDA_VISIBLE_DEVICES"] = '1' #args["--devices"] #'0'
     if torch.cuda.is_available():
         device_name = "cuda"
         torch.backends.cudnn.deterministic = True
@@ -164,7 +165,9 @@ def main():
         #model.load_state_dict(checkpoint["model_state_dict"])
     model = model.to(device)
 
-    freeze_bn(model)
+    # We should only freeze batch norm if needed
+    if resume_from:
+        freeze_bn(model)
 
     # 3. optimizer
     if C.optim.name == "Adam":

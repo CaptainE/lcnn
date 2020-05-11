@@ -13,6 +13,29 @@ from torch.utils.data.dataloader import default_collate
 
 from lcnn.config import M
 
+# use for curvature and edge
+import cv2
+
+def read_edge_curve_img(img, types='curve')
+    if types='curve':
+        ex = '_curvature.png'
+    else:
+        ex = '_edge'
+    base = '/home/pebert/taskonomy/dataset/'
+
+    #'+folder+'/'+num+'_curvature.png'
+    img = cv2.imread(base+img+ex, cv2.IMREAD_UNCHANGED)
+    
+    print('Original Dimensions : ',img.shape)
+    
+    scale_percent = 200 # percent of original size
+    width = int(img.shape[1] * scale_percent / 100)
+    height = int(img.shape[0] * scale_percent / 100)
+    dim = (width, height)
+    # resize image
+    resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA) 
+    retun np.array(resized)
+
 
 class WireframeDataset(Dataset):
     def __init__(self, rootdir, split):
@@ -38,13 +61,20 @@ class WireframeDataset(Dataset):
 
         # /home/pebert/bts/pytorch/result_wireframe/raw/
         dname = '/home/pebert/bts/pytorch/result_wireframe/raw/'+self.filelist[idx][:-10].split('/')[-1].replace("_a0", "").replace("_a1", "") + "_depth.png"
-        pred_depth = io.imread(dname).astype(float)/1000
-        pred_depth[pred_depth < 1e-3] = 1e-3
-        pred_depth[pred_depth > 10] = 10
-        pred_depth[np.isinf(pred_depth)] = 10
-        pred_depth[np.isnan(pred_depth)] = 1e-3
-        pred_depth = pred_depth/10*255
+
+        pred_depth = io.imread(dname).astype(float)
+        # Should not be needed with new clear depth images
+        #/1000
+        #pred_depth[pred_depth < 1e-3] = 1e-3
+        #pred_depth[pred_depth > 10] = 10
+        #pred_depth[np.isinf(pred_depth)] = 10
+        #pred_depth[np.isnan(pred_depth)] = 1e-3
+        #pred_depth = pred_depth/10*255
+        curve_or_edge = read_edge_curve_img(self.filelist[idx][:-10].split('/')[-1].replace("_a0", "").replace("_a1", ""), types='curve')
+
         image = np.concatenate((image,pred_depth.reshape(1,512,512)),axis=0)
+
+
 
         # npz["jmap"]: [J, H, W]    Junction heat map
         # npz["joff"]: [J, 2, H, W] Junction offset within each pixel
