@@ -83,7 +83,8 @@ def load_my_state_dict(old_state, state_dict):
     for name, param in state_dict.items():
         
         if name == 'backbone.backbone.conv1.weight':#not in own_state:
-            own_state[name].copy_(torch.cat((param,torch.mean(param,dim=1,keepdim=True)),dim=1))
+            n = own_state['backbone.backbone.conv1.weight'].shape[1]-3
+            own_state[name].copy_(torch.cat((param,torch.mean(param,dim=1,keepdim=True).repeat(1,n,1,1)),dim=1))
         else:
             own_state[name].copy_(param)
 
@@ -95,7 +96,7 @@ def main():
     pprint.pprint(C, indent=4)
     resume_from = C.io.resume_from
     # Use this when you want to fine tune
-    #resume_from = '/home/pebert/190418-201834-f8934c6-lr4d10-312k.pth.tar'
+    resume_from = '/home/pebert/190418-201834-f8934c6-lr4d10-312k.pth.tar'
 
     # WARNING: L-CNN is still not deterministic
     random.seed(0)

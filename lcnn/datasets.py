@@ -16,39 +16,42 @@ from lcnn.config import M
 # use for curvature and edge
 import cv2
 
-def read_edge_curve_img(img, types='curve')
-    if types='curve':
-        ex = '_curvature.png'
-    else:
-        ex = '_edge'
-    base = '/home/pebert/taskonomy/dataset/'
-
-    #'+folder+'/'+num+'_curvature.png'
-    img = cv2.imread(base+img+ex, cv2.IMREAD_UNCHANGED)
-    
-    print('Original Dimensions : ',img.shape)
-    
-    scale_percent = 200 # percent of original size
-    width = int(img.shape[1] * scale_percent / 100)
-    height = int(img.shape[0] * scale_percent / 100)
-    dim = (width, height)
-    # resize image
-    resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA) 
-    retun np.array(resized)
-
 
 class WireframeDataset(Dataset):
     def __init__(self, rootdir, split):
         self.rootdir = rootdir
         filelist = glob.glob(f"{rootdir}/{split}/*_label.npz")
+        filelist2 = glob.glob(f"/home/pebert/taskonomy/dataset/{split}/*_edge.png")
+        filelist3 = glob.glob(f"/home/pebert/taskonomy/dataset/{split}/*_curvature.png")
         filelist.sort()
+        filelist2.sort()
+        filelist3.sort()
 
         print(f"n{split}:", len(filelist))
         self.split = split
         self.filelist = filelist
+        self.filelist2 = filelist2
+        self.filelist3 = filelist3
 
     def __len__(self):
         return len(self.filelist)
+
+    def read_edge_curve_img(self, idx, types='curve'):
+        if types=='curve':
+            location = self.filelist3[idx]
+        else:
+            location = self.filelist2[idx]
+
+        #'+folder+'/'+num+'_curvature.png'
+        img = cv2.imread(location, cv2.IMREAD_UNCHANGED)
+                
+        scale_percent = 200 # percent of original size
+        width = int(img.shape[1] * scale_percent / 100)
+        height = int(img.shape[0] * scale_percent / 100)
+        dim = (width, height)
+        # resize image
+        resized = cv2.resize(img, dim, interpolation = cv2.INTER_AREA) 
+        return np.array(resized, dtype=np.float32)
 
     def __getitem__(self, idx):
         iname = self.filelist[idx][:-10].replace("_a0", "").replace("_a1", "") + ".png"
@@ -70,9 +73,12 @@ class WireframeDataset(Dataset):
         #pred_depth[np.isinf(pred_depth)] = 10
         #pred_depth[np.isnan(pred_depth)] = 1e-3
         #pred_depth = pred_depth/10*255
-        curve_or_edge = read_edge_curve_img(self.filelist[idx][:-10].split('/')[-1].replace("_a0", "").replace("_a1", ""), types='curve')
+        edge = self.read_edge_curve_img(idx, types='edge')
+        curve = self.read_edge_curve_img(idx, types='curve')
 
         image = np.concatenate((image,pred_depth.reshape(1,512,512)),axis=0)
+        image = np.concatenate((image,edge.reshape(1,512,512)),axis=0)
+        image = np.concatenate((image,curve.reshape(1,512,512)),axis=0)
 
 
 
